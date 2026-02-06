@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>CashTrack Siswa - Smart Finance</title>
+    
+    <!-- Import Font Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. VARIABLES & THEME --- */
+        :root {
+            /* Light Theme */
+            --primary: #6366f1; /* Indigo */
+            --primary-dark: #4338ca;
+            --secondary: #a855f7; /* Purple */
+            --success: #10b981;
+            --danger: #f43f5e;
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius: 24px;
+            --nav-height: 80px;
+        }
+
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- 2. RESET & GLOBAL --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            /* Fix: Mencegah delay klik 300ms pada mobile */
+            touch-action: manipulation; 
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding-bottom: calc(var(--nav-height) + 40px);
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* --- 3. UTILITIES --- */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-primary { color: var(--primary); }
+        .font-bold { font-weight: 600; }
+        .w-full { width: 100%; }
+
+        /* --- 4. LAYOUT CONTAINER --- */
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            position: relative;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* --- 5. COMPONENTS --- */
+
+        /* Header */
+        header { margin-bottom: 24px; }
+        header h1 { font-size: 1.5rem; letter-spacing: -0.5px; margin-bottom: 4px; }
+        header p { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+        .balance-card::before {
+            content: ''; position: absolute; top: -60px; right: -60px;
+            width: 180px; height: 180px; background: rgba(255,255,255,0.1); border-radius: 50%;
+            backdrop-filter: blur(10px);
+        }
+        .balance-label { font-size: 0.9rem; opacity: 0.9; font-weight: 500; }
+        .balance-amount { font-size: 2.2rem; font-weight: 700; margin: 10px 0 20px 0; letter-spacing: -1px; }
+        
+        .goal-track {
+            background: rgba(255,255,255,0.2); border-radius: 12px; height: 8px; overflow: hidden; margin-top: 8px;
+        }
+        .goal-fill { height: 100%; background: #ffffff; width: 0%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .goal-text { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 8px; opacity: 0.9; }
+
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        
+        input, select {
+            width: 100%; padding: 16px; background: var(--bg-input);
+            border: 2px solid transparent; border-radius: 16px;
+            font-size: 1rem; color: var(--text-main); font-weight: 500;
+            transition: all 0.2s; appearance: none;
+        }
+        input:focus, select:focus {
+            background: var(--bg-card); border-color: var(--primary);
+            outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        /* Fix font size iOS zoom */
+        input[type="number"] { font-size: 16px; }
+
+        /* Custom Toggle */
+        .type-switch {
+            display: flex; background: var(--bg-input); padding: 6px;
+            border-radius: 20px; margin-bottom: 24px;
+        }
+        .switch-opt {
+            flex: 1; text-align: center; padding: 12px; border-radius: 16px;
+            font-weight: 600; font-size: 0.9rem; cursor: pointer;
+            color: var(--text-muted); transition: all 0.3s ease;
+        }
+        .switch-opt.active {
+            background: var(--bg-card); color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .switch-opt.active[data-type="income"] { color: var(--success); }
+        .switch-opt.active[data-type="expense"] { color: var(--danger); }
+
+        .btn-main {
+            width: 100%; background: var(--primary); color: white;
+            border: none; padding: 18px; border-radius: 16px;
+            font-size: 1.05rem; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn-main:active { transform: scale(0.98); opacity: 0.9; }
+
+        /* Transaction List */
+        .trans-group { margin-bottom: 24px; }
+        .group-header { 
+            font-size: 0.8rem; color: var(--text-muted); font-weight: 600; 
+            margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;
+        }
+        
+        .trans-item {
+            display: flex; align-items: center; padding: 16px;
+            background: var(--bg-card); margin-bottom: 12px;
+            border-radius: 20px; box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .trans-item:active { transform: scale(0.99); }
+        
+        .trans-item.income { border-left: 5px solid var(--success); }
+        .trans-item.expense { border-left: 5px solid var(--danger); }
+
+        .trans-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin-right: 16px; flex-shrink: 0;
+        }
+        .bg-inc { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .bg-exp { background: rgba(244, 63, 94, 0.1); color: var(--danger); }
+
+        .trans-details { flex: 1; min-width: 0; } /* min-width 0 for text-overflow */
+        .trans-title { 
+            font-size: 1rem; font-weight: 600; color: var(--text-main); 
+            margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+        .trans-meta { font-size: 0.75rem; color: var(--text-muted); }
+        .trans-amount { font-weight: 700; font-size: 1rem; margin-right: 8px; }
+
+        /* Delete Button */
+        .btn-delete {
+            background: transparent; border: none; padding: 10px;
+            color: var(--text-muted); cursor: pointer; border-radius: 12px;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-delete:active { background: rgba(244, 63, 94, 0.1); color: var(--danger); }
+        .btn-delete svg { width: 20px; height: 20px; stroke-width: 2; }
+
+        /* Filter Chips */
+        .filter-wrapper {
+            display: flex; gap: 10px; overflow-x: auto; 
+            padding-bottom: 10px; margin-bottom: 10px; 
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .filter-wrapper::-webkit-scrollbar { display: none; }
+        
+        .chip {
+            padding: 8px 20px; background: var(--bg-card); border-radius: 30px;
+            font-size: 0.85rem; font-weight: 500; white-space: nowrap;
+            color: var(--text-muted); border: 1px solid var(--border);
+            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+        }
+        .chip.active { background: var(--text-main); color: var(--bg-body); border-color: var(--text-main); }
+
+        /* Chart */
+        .chart-container {
+            position: relative; height: 200px; width: 200px; margin: 0 auto;
+        }
+        .chart-center-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none;
+        }
+
+        /* --- 6. NAVIGATION --- */
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            height: var(--nav-height); border-radius: 35px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000; /* Z-Index Tinggi */
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        [data-theme="dark"] .bottom-nav {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-muted); text-decoration: none; font-size: 0.7rem;
+            padding: 10px; width: 60px; transition: all 0.2s; cursor: pointer;
+        }
+        .nav-item svg {
+            width: 24px; height: 24px; margin-bottom: 4px;
+            stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round;
+            transition: stroke 0.2s;
+        }
+        .nav-item.active { color: var(--primary); transform: translateY(-4px); }
+        
+        /* Floating Add Button */
+        .nav-add {
+            width: 56px; height: 56px; background: var(--primary); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white;
+            margin-top: -35px; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+            border: 4px solid var(--bg-body);
+            transition: transform 0.2s;
+        }
+        .nav-add:active { transform: scale(0.9); }
+        .nav-add svg { stroke-width: 2.5; width: 28px; height: 28px; margin: 0; }
+
+        /* Settings Items */
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid var(--border);
+        }
+        .setting-row:last-child { border-bottom: none; }
+        
+        .toggle-switch {
+            position: relative; width: 50px; height: 28px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border); transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px;
+            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: var(--bg-card); color: var(--text-main);
+            padding: 14px 24px; border-radius: 50px; font-size: 0.9rem; font-weight: 500;
+            box-shadow: var(--shadow-lg); z-index: 2000;
+            display: flex; align-items: center; gap: 10px;
+            border: 1px solid var(--border);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: max-content; max-width: 90%;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast-icon { color: var(--success); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Toast Component -->
+    <div id="toast" class="toast">
+        <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toastMsg">Pesan Notifikasi</span>
+    </div>
+
+    <div class="app-container">
+        
+        <!-- VIEW: HOME -->
+        <section id="view-home" class="animate-in">
+            <header>
+                <div class="flex-between" style="align-items: flex-end;">
+                    <div>
+                        <h1>Halo, Siswa! 👋</h1>
+                        <p>Kelola keuanganmu dengan bijak.</p>
+                    </div>
+                    <!-- Theme Toggle Icon Shortcut -->
+                    <div onclick="toggleTheme()" style="cursor:pointer; padding:8px; background:var(--bg-input); border-radius:50%;">
+                        <svg id="themeIconHome" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </div>
+                </div>
+            </header>
+
+            <div class="card balance-card">
+                <div class="balance-label">Total Saldo Saat Ini</div>
+                <div class="balance-amount" id="displayBalance">Rp 0</div>
+                
+                <div class="balance-label">Target Tabungan</div>
+                <div class="goal-track">
+                    <div class="goal-fill" id="goalBar"></div>
+                </div>
+                <div class="goal-text">
+                    <span id="goalCurrent">Rp 0</span>
+                    <span id="goalTarget">Target: Rp 0</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex-between" style="margin-bottom: 15px;">
+                    <h3 class="font-bold" style="font-size: 1rem;">Analisis Pengeluaran</h3>
+                    <span class="text-danger font-bold" id="monthExpense">Rp 0</span>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="expenseChart" width="200" height="200"></canvas>
+                    <div class="chart-center-text" id="chartOverlay">
+                        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">Bulan Ini</span>
+                    </div>
+                </div>
+                <div id="chartLegend" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; justify-content:center; font-size:0.75rem; color:var(--text-muted);"></div>
+            </div>
+        </section>
+
+        <!-- VIEW: ADD TRANSACTION -->
+        <section id="view-add" class="hidden animate-in">
+            <header>
+                <h1>Transaksi Baru</h1>
+                <p>Catat pemasukan atau pengeluaran.</p>
+            </header>
+
+            <div class="card">
+                <form id="transForm">
+                    <!-- Type Switch -->
+                    <div class="type-switch">
+                        <div class="switch-opt active expense" data-type="expense" onclick="setTransType('expense')">Pengeluaran</div>
+                        <div class="switch-opt" data-type="income" onclick="setTransType('income')">Pemasukan</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Jumlah Uang (Rp)</label>
+                        <input type="number" id="inputAmount" placeholder="0" inputmode="decimal" required min="1" style="font-size:1.2rem; text-align:center; letter-spacing:1px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="inputCategory" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tanggal</label>
+                        <input type="date" id="inputDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Catatan</label>
+                        <input type="text" id="inputDesc" placeholder="Contoh: Jus Jeruk, Buku Tulis" maxlength="25">
+                    </div>
+
+                    <button type="submit" class="btn-main">Simpan Transaksi</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- VIEW: HISTORY -->
+        <section id="view-history" class="hidden animate-in">
+            <header>
+                <h1>Riwayat</h1>
+                <p>Semua jejak keuanganmu.</p>
+            </header>
+
+            <div class="filter-wrapper">
+                <div class="chip active" onclick="filterHistory('all', this)">Semua</div>
+                <div class="chip" onclick="filterHistory('income', this)">Pemasukan</div>
+                <div class="chip" onclick="filterHistory('expense', this)">Pengeluaran</div>
+            </div>
+
+            <div id="listContainer">
+                <!-- Transactions will be injected here -->
+            </div>
+            
+            <div id="emptyState" class="hidden flex-center" style="flex-direction:column; padding-top:40px; color:var(--text-muted);">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                <p style="margin-top:10px;">Belum ada data transaksi</p>
+            </div>
+        </section>
+
+        <!-- VIEW: SETTINGS -->
+        <section id="view-settings" class="hidden animate-in">
+            <header>
+                <h1>Pengaturan</h1>
+                <p>Sesuaikan aplikasimu.</p>
+            </header>
+
+            <div class="card">
+                <h3 class="font-bold" style="margin-bottom: 15px; font-size: 1rem;">Tampilan</h3>
+                <div class="setting-row">
+                    <span>Mode Gelap</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold" style="margin-bottom: 15px; font-size: 1rem;">Target</h3>
+                <div class="form-group">
+                    <label>Target Saldo (Rp)</label>
+                    <div class="flex-between" style="gap:10px;">
+                        <input type="number" id="setGoalInput" placeholder="0">
+                        <button onclick="updateGoal()" style="background:var(--bg-input); border:none; padding:0 16px; border-radius:12px; font-weight:600; color:var(--primary);">Set</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold" style="margin-bottom: 15px; font-size: 1rem;">Data</h3>
+                <div class="setting-row">
+                    <span>Ekspor ke CSV</span>
+                    <button class="btn-delete" onclick="exportCSV()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </button>
+                </div>
+                <div class="setting-row">
+                    <span class="text-danger">Reset Semua Data</span>
+                    <button class="btn-delete text-danger" onclick="resetAllData()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <p style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-top:20px;">CashTrack v1.0 Final</p>
+        </section>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Beranda</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('history', this)">
+            <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>Riwayat</span>
+        </div>
+        <div class="nav-item nav-add" onclick="switchTab('add', null)">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </div>
+        <div class="nav-item" onclick="switchTab('settings', this)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Atur</span>
+        </div>
+    </nav>
+
+    <script>
+        // --- 1. CONFIG & STATE ---
+        const CONFIG = {
+            storageKey: 'casstrack_data_v1',
+            goalKey: 'casstrack_goal_v1',
+            themeKey: 'casstrack_theme_v1'
+        };
+
+        const CATEGORIES = {
+            expense: [
+                { id: 'food', name: 'Makanan', icon: '🍔' },
+                { id: 'drink', name: 'Minuman', icon: '🥤' },
+                { id: 'transport', name: 'Transport', icon: '🚌' },
+                { id: 'stationery', name: 'Alat Tulis', icon: '✏️' },
+                { id: 'game', name: 'Game/Hobi', icon: '🎮' },
+                { id: 'other', name: 'Lainnya', icon: '📌' }
+            ],
+            income: [
+                { id: 'allowance', name: 'Uang Jajan', icon: '💸' },
+                { id: 'gift', name: 'Hadiah', icon: '🎁' },
+                { id: 'salary', name: 'Gaji/Kerja', icon: '💼' },
+                { id: 'other', name: 'Lainnya', icon: '📌' }
+            ]
+        };
+
+        let state = {
+            transactions: [],
+            goal: 100000,
+            theme: 'light',
+            filter: 'all',
+            currentType: 'expense'
+        };
+
+        // --- 2. DOM ELEMENTS ---
+        const el = (id) => document.getElementById(id);
+        const els = {
+            views: ['home', 'add', 'history', 'settings'],
+            balance: el('displayBalance'),
+            goalBar: el('goalBar'),
+            goalTarget: el('goalTarget'),
+            goalCurrent: el('goalCurrent'),
+            form: el('transForm'),
+            inputAmount: el('inputAmount'),
+            inputCat: el('inputCategory'),
+            inputDate: el('inputDate'),
+            inputDesc: el('inputDesc'),
+            listContainer: el('listContainer'),
+            emptyState: el('emptyState'),
+            chart: el('expenseChart'),
+            chartLegend: el('chartLegend'),
+            monthExp: el('monthExpense'),
+            themeToggle: el('themeToggle'),
+            toast: el('toast'),
+            toastMsg: el('toastMsg'),
+            goalInput: el('setGoalInput'),
+            typeSwitches: document.querySelectorAll('.switch-opt')
+        };
+
+        // --- 3. CORE LOGIC ---
+
+        function init() {
+            loadData();
+            applyTheme(state.theme);
+            els.inputDate.valueAsDate = new Date();
+            els.goalInput.value = state.goal;
+            renderCategories();
+            updateUI();
+        }
+
+        function loadData() {
+            try {
+                const rawTrans = localStorage.getItem(CONFIG.storageKey);
+                const rawGoal = localStorage.getItem(CONFIG.goalKey);
+                const rawTheme = localStorage.getItem(CONFIG.themeKey);
+
+                if (rawTrans) state.transactions = JSON.parse(rawTrans);
+                if (rawGoal) state.goal = parseInt(rawGoal);
+                if (rawTheme) state.theme = rawTheme;
+            } catch (e) {
+                console.error("Gagal memuat data", e);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.transactions));
+            localStorage.setItem(CONFIG.goalKey, state.goal.toString());
+            localStorage.setItem(CONFIG.themeKey, state.theme);
+            updateUI();
+        }
+
+        function updateUI() {
+            renderBalance();
+            renderList();
+            drawChart();
+        }
+
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', { 
+                style: 'currency', currency: 'IDR', maximumFractionDigits: 0 
+            }).format(num);
+        }
+
+        // --- 4. RENDERERS ---
+
+        function renderBalance() {
+            const total = state.transactions.reduce((acc, t) => 
+                t.type === 'income' ? acc + t.amount : acc - t.amount, 0
+            );
+
+            els.balance.textContent = formatRupiah(total);
+            els.goalCurrent.textContent = formatRupiah(total);
+            els.goalTarget.textContent = `Target: ${formatRupiah(state.goal)}`;
+
+            const pct = Math.min((total / state.goal) * 100, 100);
+            els.goalBar.style.width = `${pct}%`;
+            
+            // Month Expense
+            const now = new Date();
+            const monthExp = state.transactions
+                .filter(t => t.type === 'expense' && new Date(t.date).getMonth() === now.getMonth())
+                .reduce((a,b) => a + b.amount, 0);
+            els.monthExp.textContent = formatRupiah(monthExp);
+        }
+
+        function renderCategories() {
+            els.inputCat.innerHTML = '';
+            const list = CATEGORIES[state.currentType];
+            list.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.icon} ${c.name}`;
+                els.inputCat.appendChild(opt);
+            });
+        }
+
+        function setTransType(type) {
+            state.currentType = type;
+            els.typeSwitches.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === type);
+            });
+            renderCategories();
+        }
+
+        function renderList() {
+            els.listContainer.innerHTML = '';
+            
+            // Filter
+            let filtered = state.transactions;
+            if (state.filter !== 'all') {
+                filtered = filtered.filter(t => t.type === state.filter);
+            }
+
+            if (filtered.length === 0) {
+                els.emptyState.classList.remove('hidden');
+                return;
+            } else {
+                els.emptyState.classList.add('hidden');
+            }
+
+            // Group by Date
+            const groups = {};
+            filtered.forEach(t => {
+                if (!groups[t.date]) groups[t.date] = [];
+                groups[t.date].push(t);
+            });
+
+            // Sort Dates Descending
+            const sortedDates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(date => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'trans-group';
+
+                // Header Date
+                const dateObj = new Date(date);
+                const today = new Date();
+                let dateStr = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+                if (dateObj.toDateString() === today.toDateString()) dateStr = "Hari Ini";
+
+                groupDiv.innerHTML = `<div class="group-header">${dateStr}</div>`;
+
+                // Items
+                groups[date].forEach(t => {
+                    const catList = t.type === 'expense' ? CATEGORIES.expense : CATEGORIES.income;
+                    const catObj = catList.find(c => c.id === t.category) || { name: 'Umum', icon: '❓' };
+                    const isInc = t.type === 'income';
+                    const colorClass = isInc ? 'bg-inc' : 'bg-exp';
+                    const borderClass = isInc ? 'income' : 'expense';
+                    const sign = isInc ? '+' : '-';
+                    const amountColor = isInc ? 'text-success' : 'text-danger';
+
+                    const item = document.createElement('div');
+                    item.className = `trans-item ${borderClass}`;
+                    item.innerHTML = `
+                        <div class="trans-icon ${colorClass}">${catObj.icon}</div>
+                        <div class="trans-details">
+                            <div class="trans-title">${t.desc}</div>
+                            <div class="trans-meta">${catObj.name}</div>
+                        </div>
+                        <div class="flex-center">
+                            <div class="trans-amount ${amountColor}">${sign}${formatRupiah(t.amount)}</div>
+                            <button class="btn-delete" aria-label="Hapus">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `;
+
+                    // Delete Logic (Fixed Interaction)
+                    const delBtn = item.querySelector('.btn-delete');
+                    delBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm('Hapus transaksi ini?')) {
+                            state.transactions = state.transactions.filter(x => x.id !== t.id);
+                            saveData();
+                            showToast('Transaksi dihapus');
+                        }
+                    });
+
+                    groupDiv.appendChild(item);
+                });
+
+                els.listContainer.appendChild(groupDiv);
+            });
+        }
+
+        function filterHistory(type, chip) {
+            state.filter = type;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            renderList();
+        }
+
+        function drawChart() {
+            const ctx = els.chart.getContext('2d');
+            const width = els.chart.width;
+            const height = els.chart.height;
+            ctx.clearRect(0, 0, width, height);
+
+            const expenses = state.transactions.filter(t => t.type === 'expense');
+            if (expenses.length === 0) {
+                // Draw empty grey circle
+                ctx.beginPath();
+                ctx.arc(100, 100, 80, 0, 2 * Math.PI);
+                ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--border');
+                ctx.lineWidth = 20;
+                ctx.stroke();
+                els.chartLegend.innerHTML = "Belum ada pengeluaran";
+                return;
+            }
+
+            // Aggregate Data
+            const dataMap = {};
+            let total = 0;
+            CATEGORIES.expense.forEach(c => dataMap[c.id] = 0);
+            
+            expenses.forEach(t => {
+                if (dataMap[t.category] !== undefined) {
+                    dataMap[t.category] += t.amount;
+                    total += t.amount;
+                }
+            });
+
+            const colors = ['#f43f5e', '#6366f1', '#10b981', '#f59e0b', '#a855f7', '#ec4899'];
+            let startAngle = 0;
+            els.chartLegend.innerHTML = '';
+
+            CATEGORIES.expense.forEach((cat, index) => {
+                const val = dataMap[cat.id];
+                if (val > 0) {
+                    const sliceAngle = (2 * Math.PI * val) / total;
+                    const color = colors[index % colors.length];
+
+                    // Draw Slice
+                    ctx.beginPath();
+                    ctx.moveTo(100, 100);
+                    ctx.arc(100, 100, 80, startAngle, startAngle + sliceAngle);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+
+                    startAngle += sliceAngle;
+
+                    // Add to legend
+                    const pct = Math.round((val/total)*100);
+                    els.chartLegend.innerHTML += `<div style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:${color}"></span>${cat.name} (${pct}%)</div>`;
+                }
+            });
+
+            // Cutout Center (Donut)
+            ctx.beginPath();
+            ctx.arc(100, 100, 50, 0, 2 * Math.PI);
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-card'); // Match card bg
+            ctx.fill();
+        }
+
+        // --- 5. NAVIGATION & INTERACTION ---
+
+        function switchTab(viewId, navEl) {
+            // Hide all views
+            els.views.forEach(v => el('view-' + v).classList.add('hidden'));
+            // Show target view
+            el('view-' + viewId).classList.remove('hidden');
+            
+            // Update Nav State
+            if (navEl) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                navEl.classList.add('active');
+            } else if (viewId === 'add') {
+                // Floating button handling
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            }
+
+            // Special triggers
+            if (viewId === 'home') updateUI();
+            if (viewId === 'add') {
+                els.inputAmount.focus();
+            }
+        }
+
+        function toggleTheme() {
+            state.theme = state.theme === 'light' ? 'dark' : 'light';
+            applyTheme(state.theme);
+            saveData();
+            showToast(state.theme === 'dark' ? 'Mode Gelap Aktif' : 'Mode Terang Aktif');
+        }
+
+        function applyTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            els.themeToggle.checked = themeName === 'dark';
+            // Redraw chart because background color might change for the donut cutout
+            if(state.transactions.length > 0) drawChart();
+        }
+
+        function showToast(msg) {
+            els.toastMsg.textContent = msg;
+            els.toast.classList.add('show');
+            setTimeout(() => els.toast.classList.remove('show'), 3000);
+        }
+
+        // --- 6. EVENT LISTENERS ---
+
+        els.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(els.inputAmount.value);
+            if (!amount || amount <= 0) return showToast('Masukkan nominal yang valid');
+
+            const newTrans = {
+                id: Date.now(),
+                type: state.currentType,
+                amount: amount,
+                category: els.inputCat.value,
+                date: els.inputDate.value,
+                desc: els.inputDesc.value || (state.currentType === 'income' ? 'Pemasukan' : 'Pengeluaran')
+            };
+
+            state.transactions.unshift(newTrans); // Add to top
+            saveData();
+            
+            // Reset Form partly
+            els.inputAmount.value = '';
+            els.inputDesc.value = '';
+            showToast('Transaksi Berhasil ✨');
+            
+            // Switch to history or stay? Let's stay to add multiple
+        });
+
+        els.themeToggle.addEventListener('change', toggleTheme);
+
+        function updateGoal() {
+            const val = parseInt(els.goalInput.value);
+            if (val > 0) {
+                state.goal = val;
+                saveData();
+                showToast('Target diperbarui!');
+            } else {
+                showToast('Target tidak valid');
+            }
+        }
+
+        function resetAllData() {
+            if(confirm('PERINGATAN: Semua data akan dihapus permanen. Lanjutkan?')) {
+                localStorage.clear();
+                state.transactions = [];
+                state.goal = 0;
+                location.reload();
+            }
+        }
+
+        function exportCSV() {
+            if (state.transactions.length === 0) return showToast("Tidak ada data untuk diekspor");
+            
+            const header = ["Tanggal", "Tipe", "Kategori", "Jumlah", "Catatan"];
+            const rows = state.transactions.map(t => [
+                t.date, t.type, t.category, t.amount, `"${t.desc}"`
+            ]);
+            
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + header.join(",") + "\n" 
+                + rows.map(e => e.join(",")).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "data_keuangan_casstrack.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- 7. RUN ---
+        init();
+
+    </script>
+</body>
+</html>
