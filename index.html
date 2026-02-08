@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Aplikasi pencatat keuangan sederhana untuk siswa.">
+    <title>CashTrack - Smart Finance</title>
+    
+    <!-- Import Font Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Link ke File CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Toast Component -->
+    <div id="toast" class="toast" role="alert" aria-live="polite">
+        <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" role="img" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toastMsg">Pesan Notifikasi</span>
+    </div>
+
+    <div class="app-container">
+        
+        <!-- VIEW: HOME -->
+        <section id="view-home" class="animate-in">
+            <header>
+                <div class="flex-between" style="align-items: flex-end;">
+                    <div>
+                        <h1>Halo, Siswa! 👋</h1>
+                        <p>Kelola keuanganmu dengan bijak.</p>
+                    </div>
+                    <!-- Theme Toggle Icon Shortcut -->
+                    <!-- Added role="button" and tabindex for accessibility -->
+                    <div role="button" tabindex="0" onclick="toggleTheme()" onkeydown="if(event.key === 'Enter') toggleTheme()" style="cursor:pointer; padding:8px; background:var(--bg-input); border-radius:50%;" aria-label="Ganti Tema">
+                        <svg id="themeIconHome" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </div>
+                </div>
+            </header>
+
+            <div class="card balance-card">
+                <div class="balance-label">Total Saldo Saat Ini</div>
+                <div class="balance-amount" id="displayBalance">Rp 0</div>
+                
+                <div class="balance-label">Target Tabungan</div>
+                <div class="goal-track">
+                    <div class="goal-fill" id="goalBar"></div>
+                </div>
+                <div class="goal-text">
+                    <span id="goalCurrent">Rp 0</span>
+                    <span id="goalTarget">Target: Rp 0</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex-between" style="margin-bottom: 15px;">
+                    <h3 class="font-bold" style="font-size: 1rem;">Analisis Pengeluaran</h3>
+                    <span class="text-danger font-bold" id="monthExpense">Rp 0</span>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="expenseChart" width="200" height="200" role="img" aria-label="Grafik Donat Pengeluaran"></canvas>
+                    <div class="chart-center-text" id="chartOverlay">
+                        <span style="font-size:0.8rem; color:var(--text-muted); display:block;">Bulan Ini</span>
+                    </div>
+                </div>
+                <div id="chartLegend" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; justify-content:center; font-size:0.75rem; color:var(--text-muted);" role="list" aria-label="Legenda Grafik"></div>
+            </div>
+        </section>
+
+        <!-- VIEW: ADD TRANSACTION -->
+        <section id="view-add" class="hidden animate-in">
+            <header>
+                <h1>Transaksi Baru</h1>
+                <p>Catat pemasukan atau pengeluaran.</p>
+            </header>
+
+            <div class="card">
+                <form id="transForm" autocomplete="off">
+                    <!-- Type Switch -->
+                    <div class="type-switch" role="radiogroup" aria-label="Tipe Transaksi">
+                        <div class="switch-opt active expense" role="radio" aria-checked="true" tabindex="0" data-type="expense" onclick="setTransType('expense')" onkeydown="if(event.key === 'Enter') setTransType('expense')">Pengeluaran</div>
+                        <div class="switch-opt" role="radio" aria-checked="false" tabindex="0" data-type="income" onclick="setTransType('income')" onkeydown="if(event.key === 'Enter') setTransType('income')">Pemasukan</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputAmount">Jumlah Uang (Rp)</label>
+                        <!-- Added inputmode for better mobile keyboard -->
+                        <input type="number" id="inputAmount" name="amount" placeholder="0" inputmode="decimal" required min="1" style="font-size:1.2rem; text-align:center; letter-spacing:1px;" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputCategory">Kategori</label>
+                        <select id="inputCategory" name="category" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputDate">Tanggal</label>
+                        <input type="date" id="inputDate" name="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputDesc">Catatan</label>
+                        <input type="text" id="inputDesc" name="desc" placeholder="Contoh: Jus Jeruk, Buku Tulis" maxlength="25" autocomplete="off">
+                    </div>
+
+                    <button type="submit" class="btn-main">Simpan Transaksi</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- VIEW: HISTORY -->
+        <section id="view-history" class="hidden animate-in">
+            <header>
+                <h1>Riwayat</h1>
+                <p>Semua jejak keuanganmu.</p>
+            </header>
+
+            <div class="filter-wrapper" role="tablist" aria-label="Filter Riwayat">
+                <div class="chip active" role="tab" aria-selected="true" tabindex="0" onclick="filterHistory('all', this)" onkeydown="if(event.key === 'Enter') filterHistory('all', this)">Semua</div>
+                <div class="chip" role="tab" aria-selected="false" tabindex="0" onclick="filterHistory('income', this)" onkeydown="if(event.key === 'Enter') filterHistory('income', this)">Pemasukan</div>
+                <div class="chip" role="tab" aria-selected="false" tabindex="0" onclick="filterHistory('expense', this)" onkeydown="if(event.key === 'Enter') filterHistory('expense', this)">Pengeluaran</div>
+            </div>
+
+            <div id="listContainer">
+                <!-- Transactions will be injected here -->
+            </div>
+            
+            <div id="emptyState" class="hidden flex-center" style="flex-direction:column; padding-top:40px; color:var(--text-muted);" aria-live="polite">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" role="img" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                <p style="margin-top:10px;">Belum ada data transaksi</p>
+            </div>
+        </section>
+
+        <!-- VIEW: SETTINGS -->
+        <section id="view-settings" class="hidden animate-in">
+            <header>
+                <h1>Pengaturan</h1>
+                <p>Sesuaikan aplikasimu.</p>
+            </header>
+
+            <div class="card">
+                <h3 class="font-bold" style="margin-bottom: 15px; font-size: 1rem;">Tampilan</h3>
+                <div class="setting-row">
+                    <span>Mode Gelap</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold" style="margin-bottom: 15px; font-size: 1rem;">Target</h3>
+                <div class="form-group">
+                    <label for="setGoalInput">Target Saldo (Rp)</label>
+                    <div class="flex-between" style="gap:10px;">
+                        <input type="number" id="setGoalInput" placeholder="0" autocomplete="off">
+                        <!-- Added aria-label to button -->
+                        <button type="button" onclick="updateGoal()" style="background:var(--bg-input); border:none; padding:0 16px; border-radius:12px; font-weight:600; color:var(--primary);" aria-label="Simpan Target">Set</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-bold" style="margin-bottom: 15px; font-size: 1rem;">Data</h3>
+                <div class="setting-row">
+                    <span>Ekspor ke CSV</span>
+                    <!-- Added aria-label and type="button" -->
+                    <button type="button" class="btn-delete" onclick="exportCSV()" aria-label="Unduh Data CSV">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" role="img" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </button>
+                </div>
+                <div class="setting-row">
+                    <span class="text-danger">Reset Semua Data</span>
+                    <!-- Added aria-label and type="button" -->
+                    <button type="button" class="btn-delete text-danger" onclick="resetAllData()" aria-label="Hapus Semua Data">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" role="img" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <p style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-top:20px;">CashTrack v1.1 Stable</p>
+        </section>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" role="navigation" aria-label="Menu Navigasi Bawah">
+        <div class="nav-item active" role="button" tabindex="0" aria-current="page" onclick="switchTab('home', this)" onkeydown="if(event.key === 'Enter') switchTab('home', this)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Beranda</span>
+        </div>
+        <div class="nav-item" role="button" tabindex="0" onclick="switchTab('history', this)" onkeydown="if(event.key === 'Enter') switchTab('history', this)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>Riwayat</span>
+        </div>
+        <div class="nav-item nav-add" role="button" tabindex="0" aria-label="Tambah Transaksi" onclick="switchTab('add', null)" onkeydown="if(event.key === 'Enter') switchTab('add', null)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </div>
+        <div class="nav-item" role="button" tabindex="0" onclick="switchTab('settings', this)" onkeydown="if(event.key === 'Enter') switchTab('settings', this)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Atur</span>
+        </div>
+    </nav>
+
+    <!-- Link ke File JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
